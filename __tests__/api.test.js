@@ -123,10 +123,98 @@ describe('Todo API Endpoints', () => {
       
       // Toggle completion
       const response = await request(app)
-        .put(`/api/todos/${todoId}`);
+        .put(`/api/todos/${todoId}`)
+        .send({ completed: true });
       
       expect(response.status).toBe(200);
       expect(response.body.completed).toBe(true);
+    });
+
+    test('should update todo text', async () => {
+      // Create a todo first
+      const createResponse = await request(app)
+        .post('/api/todos')
+        .send({ text: 'Original text' });
+      
+      const todoId = createResponse.body.id;
+      
+      // Update text
+      const response = await request(app)
+        .put(`/api/todos/${todoId}`)
+        .send({ text: 'Updated text' });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.text).toBe('Updated text');
+      expect(response.body.completed).toBe(false); // Should remain unchanged
+    });
+
+    test('should update both text and completion', async () => {
+      // Create a todo first
+      const createResponse = await request(app)
+        .post('/api/todos')
+        .send({ text: 'Original text' });
+      
+      const todoId = createResponse.body.id;
+      
+      // Update both
+      const response = await request(app)
+        .put(`/api/todos/${todoId}`)
+        .send({ text: 'Updated text', completed: true });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.text).toBe('Updated text');
+      expect(response.body.completed).toBe(true);
+    });
+
+    test('should trim whitespace from updated text', async () => {
+      // Create a todo first
+      const createResponse = await request(app)
+        .post('/api/todos')
+        .send({ text: 'Original text' });
+      
+      const todoId = createResponse.body.id;
+      
+      // Update text with whitespace
+      const response = await request(app)
+        .put(`/api/todos/${todoId}`)
+        .send({ text: '  Updated text  ' });
+      
+      expect(response.status).toBe(200);
+      expect(response.body.text).toBe('Updated text');
+    });
+
+    test('should return 400 if updated text is empty', async () => {
+      // Create a todo first
+      const createResponse = await request(app)
+        .post('/api/todos')
+        .send({ text: 'Original text' });
+      
+      const todoId = createResponse.body.id;
+      
+      // Try to update with empty text
+      const response = await request(app)
+        .put(`/api/todos/${todoId}`)
+        .send({ text: '' });
+      
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Todo text cannot be empty');
+    });
+
+    test('should return 400 if updated text is only whitespace', async () => {
+      // Create a todo first
+      const createResponse = await request(app)
+        .post('/api/todos')
+        .send({ text: 'Original text' });
+      
+      const todoId = createResponse.body.id;
+      
+      // Try to update with whitespace-only text
+      const response = await request(app)
+        .put(`/api/todos/${todoId}`)
+        .send({ text: '   ' });
+      
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Todo text cannot be empty');
     });
 
     test('should toggle back to incomplete', async () => {
@@ -138,10 +226,10 @@ describe('Todo API Endpoints', () => {
       const todoId = createResponse.body.id;
       
       // Toggle to complete
-      await request(app).put(`/api/todos/${todoId}`);
+      await request(app).put(`/api/todos/${todoId}`).send({ completed: true });
       
       // Toggle back to incomplete
-      const response = await request(app).put(`/api/todos/${todoId}`);
+      const response = await request(app).put(`/api/todos/${todoId}`).send({ completed: false });
       
       expect(response.status).toBe(200);
       expect(response.body.completed).toBe(false);
@@ -149,7 +237,8 @@ describe('Todo API Endpoints', () => {
 
     test('should return 404 if todo not found', async () => {
       const response = await request(app)
-        .put('/api/todos/999999');
+        .put('/api/todos/999999')
+        .send({ text: 'Updated text' });
       
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('error', 'Todo not found');
@@ -220,7 +309,7 @@ describe('Todo API Endpoints', () => {
       expect(getResponse.body).toHaveLength(1);
       
       // Update (toggle) todo
-      const updateResponse = await request(app).put(`/api/todos/${todoId}`);
+      const updateResponse = await request(app).put(`/api/todos/${todoId}`).send({ completed: true });
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.completed).toBe(true);
       

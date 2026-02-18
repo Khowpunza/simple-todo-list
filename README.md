@@ -8,6 +8,7 @@ A simple and elegant to-do list web application built with Node.js, Express, and
 
 - ✅ Add new todos
 - ✅ Mark todos as complete/incomplete
+- ✅ Edit todo text
 - ✅ Delete todos
 - ✅ Persistent storage using JSON file
 - ✅ Beautiful gradient UI design
@@ -58,7 +59,8 @@ Or simply connect your GitHub repository to Vercel and it will automatically dep
 - `GET /api/todos` - Get all todos
 - `POST /api/todos` - Create a new todo
   - Body: `{ "text": "Todo text" }`
-- `PUT /api/todos/:id` - Toggle todo completion status
+- `PUT /api/todos/:id` - Update todo (text and/or completion status)
+  - Body: `{ "text": "Updated text", "completed": true }` (both optional)
 - `DELETE /api/todos/:id` - Delete a todo
 
 ## Project Structure

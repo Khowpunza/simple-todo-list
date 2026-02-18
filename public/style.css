@@ -111,6 +111,43 @@ h1 {
     color: #333;
 }
 
+.edit-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+    background: #ffa726;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.edit-btn:hover, .save-btn:hover {
+    background: #fb8c00;
+}
+
+.cancel-btn {
+    background: #757575;
+}
+
+.cancel-btn:hover {
+    background: #616161;
+}
+
 .delete-btn {
     background: #ff4757;
     color: white;

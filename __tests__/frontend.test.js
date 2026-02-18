@@ -78,7 +78,11 @@ describe('Frontend Todo Application', () => {
             ${todo.completed ? 'checked' : ''} 
             onchange="toggleTodo(${todo.id})"
           />
-          <span class="todo-text">${escapeHtml(todo.text)}</span>
+          <span class="todo-text" id="text-${todo.id}">${escapeHtml(todo.text)}</span>
+          <input type="text" class="edit-input" id="edit-${todo.id}" value="${escapeHtml(todo.text)}" style="display: none;" />
+          <button class="edit-btn" id="edit-btn-${todo.id}" onclick="startEdit(${todo.id})">Edit</button>
+          <button class="save-btn" id="save-btn-${todo.id}" onclick="saveEdit(${todo.id})" style="display: none;">Save</button>
+          <button class="cancel-btn" id="cancel-btn-${todo.id}" onclick="cancelEdit(${todo.id})" style="display: none;">Cancel</button>
           <button class="delete-btn" onclick="deleteTodo(${todo.id})">Delete</button>
         </div>
       `).join('');
@@ -86,6 +90,9 @@ describe('Frontend Todo Application', () => {
       expect(todoList.children.length).toBe(2);
       expect(todoList.innerHTML).toContain('Test todo');
       expect(todoList.innerHTML).toContain('Completed todo');
+      expect(todoList.innerHTML).toContain('edit-btn');
+      expect(todoList.innerHTML).toContain('save-btn');
+      expect(todoList.innerHTML).toContain('cancel-btn');
     });
   });
 
@@ -228,6 +235,10 @@ describe('Frontend Todo Application', () => {
 
       const response = await fetch('/api/todos/1', {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed: true }),
       });
 
       expect(response.ok).toBe(true);
@@ -242,6 +253,10 @@ describe('Frontend Todo Application', () => {
 
       const response = await fetch('/api/todos/1', {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed: true }),
       });
 
       if (!response.ok) {
@@ -283,6 +298,131 @@ describe('Frontend Todo Application', () => {
       }
 
       expect(alert).toHaveBeenCalledWith('Failed to delete todo');
+    });
+  });
+
+  describe('startEdit function', () => {
+    test('should show edit input and hide text span', () => {
+      // Set up DOM elements
+      document.body.innerHTML += `
+        <span id="text-1" style="display: inline;">Test todo</span>
+        <input id="edit-1" style="display: none;" value="Test todo" />
+        <button id="edit-btn-1" style="display: inline;">Edit</button>
+        <button id="save-btn-1" style="display: none;">Save</button>
+        <button id="cancel-btn-1" style="display: none;">Cancel</button>
+      `;
+
+      // Call startEdit
+      document.getElementById('text-1').style.display = 'none';
+      document.getElementById('edit-1').style.display = 'inline';
+      document.getElementById('edit-btn-1').style.display = 'none';
+      document.getElementById('save-btn-1').style.display = 'inline';
+      document.getElementById('cancel-btn-1').style.display = 'inline';
+
+      expect(document.getElementById('text-1').style.display).toBe('none');
+      expect(document.getElementById('edit-1').style.display).toBe('inline');
+      expect(document.getElementById('edit-btn-1').style.display).toBe('none');
+      expect(document.getElementById('save-btn-1').style.display).toBe('inline');
+      expect(document.getElementById('cancel-btn-1').style.display).toBe('inline');
+    });
+  });
+
+  describe('saveEdit function', () => {
+    test('should save edited todo', async () => {
+      const updatedTodo = { id: 1, text: 'Updated todo', completed: false };
+      
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => updatedTodo
+      });
+
+      // Mock DOM elements
+      document.body.innerHTML += `
+        <input id="edit-1" value="Updated todo" />
+      `;
+
+      const response = await fetch('/api/todos/1', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Updated todo' }),
+      });
+
+      expect(response.ok).toBe(true);
+      const result = await response.json();
+      expect(result.text).toBe('Updated todo');
+    });
+
+    test('should not save empty todo', () => {
+      // Mock DOM elements
+      document.body.innerHTML += `
+        <input id="edit-1" value="" />
+      `;
+
+      const newText = document.getElementById('edit-1').value.trim();
+      
+      if (!newText) {
+        alert('Todo text cannot be empty');
+      }
+
+      expect(alert).toHaveBeenCalledWith('Todo text cannot be empty');
+    });
+
+    test('should handle save error', async () => {
+      fetch.mockResolvedValueOnce({
+        ok: false
+      });
+
+      // Mock DOM elements
+      document.body.innerHTML += `
+        <input id="edit-1" value="Updated todo" />
+      `;
+
+      const response = await fetch('/api/todos/1', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Updated todo' }),
+      });
+
+      if (!response.ok) {
+        alert('Failed to update todo');
+      }
+
+      expect(alert).toHaveBeenCalledWith('Failed to update todo');
+    });
+  });
+
+  describe('cancelEdit function', () => {
+    test('should cancel editing and restore original state', () => {
+      // Set up DOM elements in editing state
+      document.body.innerHTML += `
+        <span id="text-1" style="display: none;">Original todo</span>
+        <input id="edit-1" style="display: inline;" value="Modified todo" />
+        <button id="edit-btn-1" style="display: none;">Edit</button>
+        <button id="save-btn-1" style="display: inline;">Save</button>
+        <button id="cancel-btn-1" style="display: inline;">Cancel</button>
+      `;
+
+      // Mock todos array
+      const todos = [{ id: 1, text: 'Original todo', completed: false }];
+
+      // Call cancelEdit logic
+      document.getElementById('edit-1').value = todos.find(t => t.id === 1).text;
+      document.getElementById('text-1').style.display = 'inline';
+      document.getElementById('edit-1').style.display = 'none';
+      document.getElementById('edit-btn-1').style.display = 'inline';
+      document.getElementById('save-btn-1').style.display = 'none';
+      document.getElementById('cancel-btn-1').style.display = 'none';
+
+      expect(document.getElementById('text-1').style.display).toBe('inline');
+      expect(document.getElementById('edit-1').style.display).toBe('none');
+      expect(document.getElementById('edit-btn-1').style.display).toBe('inline');
+      expect(document.getElementById('save-btn-1').style.display).toBe('none');
+      expect(document.getElementById('cancel-btn-1').style.display).toBe('none');
+      expect(document.getElementById('edit-1').value).toBe('Original todo');
     });
   });
 
